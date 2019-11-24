@@ -125,7 +125,7 @@ def main():
                 A[k, i] = 0
                 for j in range(d):
                     A[k, i] = A[k, i] +  W[i, j] * train_imgs[k, j]
-                X[k, i] = sigmoid(A[k, i]) # 1/(1+math.exp(-A[k,i] - W[i,d]))   #
+                X[k, i] = sigmoid(A[k, i] - W[i, d]) # 1/(1+math.exp(-A[k,i] - W[i,d]))   #
                 loss += (X[k, i] - train_labels_one_hot[k, i])**2
                 error[i] =  X[k, i] - train_labels_one_hot[k, i]
                 W_grad[i, ] += error[i] * X[k, i] * (1 - X[k, i]) * train_imgs[k, ]

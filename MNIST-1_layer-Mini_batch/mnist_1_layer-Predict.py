@@ -5,6 +5,7 @@
 import numpy as np
 import csv
 import math
+import sys
 import matplotlib.pyplot as plt
 
 def sigmoid(x):
@@ -34,7 +35,7 @@ def main():
     m = 10                                                      # No. of neurons
     d = 28*28                                                   # No. of pixels for each image
     l = 50                                                      # No. of examples
-    W = np.loadtxt('trained_weights.txt', delimiter=',')    # Trained weights
+    W = W = np.loadtxt('trained_weights.txt', delimiter=',')    # Trained weights
 
     ##############################################
     # Read the test_data csv file #
@@ -51,54 +52,31 @@ def main():
         for j in range(d):
             test_imgs[k, j] = test_data[k, j] * test_factor
 
-    ####################
-    # One-Hot encoding #
-    ####################
-    # View the general encoding
-    all_digits = np.arange(10)
-    print("\nONE-HOT encoding")
-    for label in range(10):
-        one_hot = (all_digits == label).astype(np.int)
-        print(label, " to one-hot: ", one_hot)
-    # Encoding the labels
-    LowValue=0
-    HighValue=1
-    test_labels_one_hot = (all_digits == test_labels).astype(np.int)
-    test_labels_one_hot[test_labels_one_hot == 0] = LowValue
-    test_labels_one_hot[test_labels_one_hot == 1] = HighValue
 
     ##############################
     # Prediction of the test set #
     ##############################
     print("\n\n############ Test set ############")
-    print("No.\tCorrect\tPredicted")
-    corrects = 0
-    non_valid = 0
-    for test_el in range(n):
-        # TODO: make prediction and test if it's correct
-        # Visualize the correct result
-        #   print(test_labels_one_hot[test_el], " -> ", one_hot_to_digit(test_labels_one_hot[test_el]))
-        prediction = np.zeros(m)
-        for i in range(m):
-            for j in range(d):
-                prediction[i] += W[i, j] * test_imgs[test_el, j]
-            prediction[i] = sigmoid(prediction[i])
-        correct_answer = one_hot_to_digit(test_labels_one_hot[test_el])
-        all_digits = np.arange(m)
-        #print(prediction)
-        prediction_one_hot = one_hot_encoding(prediction)
-        #print(prediction_one_hot)
-        prediction_digit = -1
-        if (len(prediction_one_hot) != 0):
-            prediction_digit = one_hot_to_digit(prediction_one_hot)
-        else:
-            non_valid += 1
-        # Check the correctness
-        if prediction_digit == correct_answer:
-            corrects += 1
-        print(test_el, '\t', correct_answer, "\t", prediction_digit)
-    print("Correct percentage: ", ((corrects/(n-non_valid))*100), "%")
-    print("Non-Valid answers: ", non_valid)
+    if(sys.argv[1] == 'HLT'):   # High and Low thresold
+        LThreshold = 0.49
+        HThreshold = 0.51
+        nError = 0
+        for test_el in range(n):
+            prediction = np.zeros(m)
+            for i in range(m):
+                for j in range(d):
+                    prediction[i] += W[i, j] * test_imgs[test_el, j]
+                prediction[i] = sigmoid(prediction[i] + W[i, d])
+            if((test_data[test_el, i] == 0 and prediction[i] > LThreshold) or (test_data[test_el, i] == 1 and prediction[i] < HThreshold)):
+                nError += 1
+                i = m
+                print("No. Test: ", test_el, "-> Wrong")
+            print("No. Test: ", test_el, "-> Correct")
+        print("Correct percentage: ", ((n - nError)/n)*100, "%")
+    elif(sys.argv[1] == 'MAX2'):    # View the two higher/lower value;
+        # TODO: Implementa con verificando se la differenza tra i due valori più
+        #       alti supera una certa soglia
+        print("Ciao mirco")
 
 if __name__ == '__main__':
     main()

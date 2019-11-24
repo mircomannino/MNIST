@@ -52,23 +52,23 @@ def main():
     #############################
     # Initialize the parameters #
     #############################
-    np.random.seed(12)
+    np.random.seed(42)
     m = 10                                          # No. of neurons
     d = 28*28                                       # No. of pixels for each image
-    l = 50                                          # No. of examples
     weight_range = 0.01
     W = np.random.rand(m, d+1) * weight_range       # No. of parameters
-    A = np.zeros((l, m))                            # Argument of sigmoid function
-    X = np.zeros((l, m))                            # Activation function
     error = np.zeros(m)                             # Error for each neuron
     learning_rate = 9e-1                            # Learning rate
-    n_epochs = 250                                  # No. of epochs
+    n_epochs = 200                                  # No. of epochs
 
-    ################################
+    ##############################################
     # Read the train_data csv file #
-    ################################
+    ##############################################
     # Load the train set
-    train_data = np.loadtxt('data/mnist_train.csv', delimiter=',', max_rows=l)
+    train_data = np.loadtxt('data/mnist_train.csv', delimiter=',') # Get all the 60.000 examples
+    l = train_data.shape[0]                                        # No. of examples
+    A = np.zeros((l, m))                            # Argument of sigmoid function
+    X = np.zeros((l, m))                            # Activation function
     train_labels = train_data[:, :1]
     train_data = train_data[:, 1:]
     # Normalize the training image
@@ -115,17 +115,19 @@ def main():
     #############################
     # Training of the alogrithm #
     #############################
+    mini_batch_size = 100 # (60000 / 200)
     for epoch in range(n_epochs):
         # Initialize the gradient and risk for each epoch
         W_grad = np.zeros((m, d+1))
         risk = 0
-        for k in range(l):
+        for k_old in range(mini_batch_size):
             loss = 0
             for i in range(m):
+                k = ((mini_batch_size * epoch) + k_old) % n_epochs
                 A[k, i] = 0
                 for j in range(d):
                     A[k, i] = A[k, i] +  W[i, j] * train_imgs[k, j]
-                X[k, i] = sigmoid(A[k, i] + W[i, d])
+                X[k, i] = 1/(1+math.exp(-A[k,i] - W[i,d]))
                 # Calculate the loss (Relative entropy loss function)
                 if(train_labels_one_hot[k, i] == 1):
                     loss = (-1) * train_labels_one_hot[k,i] * math.log(X[k, i])
@@ -135,16 +137,18 @@ def main():
                 risk += loss
                 # Calculate the gradient
                 if(train_labels_one_hot[k, i] == 1):
-                    W_grad[i, ] = W_grad[i, ] - (1/l) * train_labels_one_hot[k,i] * (1 - X[k,i]) * train_imgs[k,]
+                    W_grad[i, ] = W_grad[i, ] - (1/mini_batch_size) * train_labels_one_hot[k,i] * (1 - X[k,i]) * train_imgs[k,]
                 else:
-                    W_grad[i, ] = W_grad[i, ] + (1/l) * (1 - train_labels_one_hot[k,i]) * X[k,i] * train_imgs[k,]
-        W = W - (learning_rate/l) * W_grad
-        print("Epoch: ", epoch, "   - Normalized error: ", (risk/(l * m)))
+                    W_grad[i, ] = W_grad[i, ] + (1/mini_batch_size) * (1 - train_labels_one_hot[k,i]) * X[k,i] * train_imgs[k,]
+            risk += loss
+        W -= (learning_rate/mini_batch_size) * W_grad
+        print("Epoch: ", epoch, "   - Normalized error: ", (risk/(mini_batch_size * m)))
 
     ##########################
     # Save the trained model #
     ##########################
-    np.savetxt('trained_weights.txt', W, delimiter=',')
+    file_name = 'trained_weights-bs' + str(mini_batch_size) + '.txt'
+    np.savetxt(file_name, W, delimiter=',')
 
 
 if __name__ == '__main__':

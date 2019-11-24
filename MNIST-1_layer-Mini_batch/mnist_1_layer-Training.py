@@ -115,7 +115,7 @@ def main():
     #############################
     # Training of the alogrithm #
     #############################
-    mini_batch_size = 300 # (60000 / 200)
+    mini_batch_size = 100 # (60000 / 200)
     for epoch in range(n_epochs):
         # Initialize the gradient and risk for each epoch
         W_grad = np.zeros((m, d+1))
@@ -133,7 +133,7 @@ def main():
                 W_grad[i, ] += error[i] * X[k, i] * (1 - X[k, i]) * train_imgs[k, ]
             risk += loss
         W -= (learning_rate/mini_batch_size) * W_grad
-        print("Epoch: ", epoch, "   - Normalized error: ", math.sqrt(risk/(l * m)))
+        print("Epoch: ", epoch, "   - Normalized error: ", math.sqrt(risk/(mini_batch_size * m)))
 
     ##########################
     # Save the trained model #
