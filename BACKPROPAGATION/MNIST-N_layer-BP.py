@@ -1,10 +1,13 @@
 import numpy as np
+import time
 
 def sigmoid(a):
     return 1 / (1 + np.exp(-a))
 
-def one_hot_encoding(n)
-    print("One Hot ENCODING")
+def one_hot_encoding(n):
+    all_digit = np.arange(10)
+    result = ((all_digit == n).astype(np.int))
+    return result
 
 def one_hot_decoding(n):
     print("One Hot DECODING")
@@ -12,7 +15,8 @@ def one_hot_decoding(n):
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        self.weight = np.random.rand(self.weightDim + 1) * 0.01
+        np.random.seed(int(time.time()))
+        self.weight = np.random.rand(self.weightDim + 1) * 0.001
     def calculateOutput(self, input):
         output = .0
         if(self.weightDim != len(input)):
@@ -39,13 +43,9 @@ class Layer:
         return result
 
 class NeuralNetwork:
-    def __init__(self, nHiddenLayers, nHiddenUnits, train_file):
+    def __init__(self, nHiddenLayers, nHiddenUnits):
         self.nHiddenLayers = nHiddenLayers
         self.nHiddenUnits = nHiddenUnits
-        # Get the train_data
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=2)
-        self.train_labels = train_data[:, :1]
-        self.train_imgs = train_data[:, 1:]
         # Create the first layer
         self.firstLayer = Layer(10, (28*28))
         # Create the hidden layers
@@ -55,14 +55,26 @@ class NeuralNetwork:
         # Create the output Layers
         self.outputLayer = Layer(10, 10)
 
-    def INFO(self):
-        print("Info about your network:")
-        print("No. Hidden layers:\t", len(self.layers))
-        print("No. Hidden units:\t", len(self.layers[0].neurons))
-        print("No. Output units:\t", len(self.outputLayer.neurons))
+    def train(self, train_file):
+        # Get the train_data
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=2)
+        train_labels = train_data[:, :1]
+        train_imgs = train_data[:, 1:]
+        nExamples = train_labels.shape[0]
+        print("No. Examples: ", nExamples)
+        ################
+        # Forward step #
+        ################
+        for k in range(nExamples):
+            train_label_oneHot = one_hot_encoding(train_labels[k])      # Target - OneHot
+            inputHidden = self.firstLayer.calculateOutput(image)        # First layer
+            tmp_input = inputHidden
+            outputHidden = inputHidden
+            for layer in self.layers:
+                outputHidden = layer.calculateOutput(tmp_input)         # Hidden layer
+                tmp_input = outputHidden
+            prediction = self.outputLayer.calculateOutput(outputHidden) # Output layer
 
-    def train(self):
-        print("Train...")
 
     def predict(self, test_file):
         # Get the test_data
@@ -74,14 +86,14 @@ class NeuralNetwork:
             inputHidden = self.firstLayer.calculateOutput(image)
             # Propagation in the hidden layer
             tmp_input = inputHidden
-            outputHidden = []
+            outputHidden = inputHidden
             for layer in self.layers:
                 outputHidden = layer.calculateOutput(tmp_input)
                 tmp_input = outputHidden
             # Calculates result of the output
-            result = self.outputLayer.calculateOutput(outputHidden)
-            print(result)
+            prediction = self.outputLayer.calculateOutput(outputHidden)
+            print(prediction)
 
-myNN = NeuralNetwork(5, 10, "data/mnist_train.csv")
-myNN.INFO()
+myNN = NeuralNetwork(2, 10)
+myNN.train("data/mnist_train.csv")
 myNN.predict("data/mnist_test.csv")
