@@ -72,7 +72,7 @@ class NeuralNetwork:
 
     def train(self, train_file):
         # Get the train_data
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=100)
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=2)
         train_labels = train_data[:, :1]
         train_imgs = train_data[:, 1:] / 255.0
         nExamples = train_labels.shape[0]
@@ -83,77 +83,53 @@ class NeuralNetwork:
             error = 0
             for k in range(nExamples):
                 ##### Forward Step #####
-                X = []
                 train_label_oneHot = one_hot_encoding(train_labels[k])              # Target - OneHot
-                inputHidden = self.firstLayer.calculateOutput(train_imgs[k])        # First layer
-                X.append(inputHidden)
-                tmp_input = inputHidden
-                outputHidden = inputHidden
+                X = []
+                #           X = [   [input],
+                #                   [result of HL1],
+                #                   [result of HL2],
+                #                   ...,
+                #                   [result of the OL]
+                #               ]
+                X.append(train_imgs[k])
+                firstLayerOutput = self.firstLayer.calculateOutput(train_imgs[k])   # First layer
+                X.append(firstLayerOutput)
+                tmp_input = firstLayerOutput
+                outputHidden = firstLayerOutput
                 for layer in self.hiddenLayers:
                     outputHidden = layer.calculateOutput(tmp_input)                 # Hidden layer
                     X.append(outputHidden)
                     tmp_input = outputHidden
                 prediction = self.outputLayer.calculateOutput(outputHidden)         # Output layer
+                X.append(prediction)
+                #print(prediction)
                 # Error
                 for m in range(len(prediction)):
-                    error += (1/2)*(prediction[m] - train_label_oneHot[m])**2
-                #print(prediction)
-                X.append(prediction)
+                    error += (prediction[m] - train_label_oneHot[m])**2
 
                 ##### Backward Step #####
-                delta_errors = []
-                ### Output layer
-                # j: Number of Layer
+                delta_errors = []               # Contains all the delta errors
+
+                ### OUTPUT LAYER
                 # i: Number of neuron
-                j = len(X)-1
-                delta_error_out = []
+                # j: Number of weight of thw i-th neuron
+                # h: index of X[], correspond to the previous layer of outputLayer
+                h = len(X) - 2
+                delta_error_output = []
                 for i in range(self.outputLayer.dim()):
-                    x = X[j][i]
-                    delta_error = (x * (1 - x) * (x - train_label_oneHot[i]))
-                    delta_error_out.append(delta_error)
-                    grad = delta_error * x
-                    self.outputLayer.neurons[i].weight[i] -= learning_rate * grad
-                delta_errors.append(delta_error_out)
-                ### Hidden layer
-                # j: Number of Layer  N, N-1, ..., 0
-                # inv_j: Number of layer 0, 1, ..., N
-                # i: Number of neuron
-                # c: Number of children
-                d_counter = 0   # Index for the delta_errors
-                for inv_j in range(len(self.hiddenLayers)):
-                    j = len(X) - (2 + inv_j)
-                    delta_error_hidden = []
-                    for i in range(self.hiddenLayers[j-1].dim()):
-                        x = X[j-1][i]
-                        sum = 0 # SUM(Wij * dkj) over j [ Nel quaderno ]
-                        for c in range(10):
-                            delta_error_children = delta_errors[d_counter][c]
-                            h_weight = 0
-                            if(inv_j == 0):
-                                h_weight = self.outputLayer.neurons[i].weight[c]
-                            else:
-                                h_weight = self.hiddenLayers[j].neurons[i].weight[c]
-                            sum += h_weight * delta_error_children
-                        delta_error = x * sum
-                        delta_error_hidden.append(delta_error)
-                        grad = delta_error * x
-                        self.hiddenLayers[j-1].neurons[i].weight -= learning_rate * grad
-                    delta_errors.append(delta_error_hidden)
-                    d_counter += 1
-                ### First Layer
-                # j: Number of Layer
-                # i: Number of neuron
-                for i in range(self.firstLayer.dim()):
-                    x = X[0][i]
-                    sum = 0 # SUM(Wij * dkj) over j [ Nel quaderno ]
-                    for c in range(10):
-                        delta_error_children = delta_errors[d_counter][c]
-                        h_weight = self.hiddenLayers[0].neurons[i].weight[c]
-                        sum += h_weight * delta_error_children
-                    delta_error = x * sum
-                    grad = delta_error * x
-                    self.firstLayer.neurons[i].weight -= learning_rate * grad
-            print("Epoch: ", epoch, " Error: ", np.sqrt(error/(nExamples*10)))
+                    Y_ki = train_label_oneHot[i]
+                    sig_ki = X[h+1][i]
+                    delta_error_ki = (sig_ki * (1 - sig_ki)) * (sig_ki - Y_ki)
+                    delta_error_output.append(delta_error_ki)
+                    for j in range(len(X[h])):
+                        X_kj = X[h][j]
+                        grad_ij = delta_error_ki * X_kj
+                        self.outputLayer.neurons[i].weight[j] -= learning_rate * grad_ij
+                delta_errors.append(delta_error_output)
+
+                ### HIDDEN LAYER
+
+            print("Epoch: ", epoch, " Error: ", np.sqrt(error/(nExamples*10*2)))
 
     def predict(self, test_file):
         # Get the test_data
