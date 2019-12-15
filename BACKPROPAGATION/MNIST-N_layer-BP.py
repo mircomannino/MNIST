@@ -4,16 +4,10 @@ import time
 def sigmoid(a):
     return 1 / (1 + np.exp(-a))
 
-def sigmoid_prime(a):
-    return ( sigmoid(a) * (1 - sigmoid(a)) )
-
 def one_hot_encoding(n):
     all_digit = np.arange(10)
     result = ((all_digit == n).astype(np.int))
     return result
-
-def one_hot_decoding(n):
-    print("One Hot DECODING")
 
 np.random.seed(int(time.time()))
 class Neuron:
@@ -72,13 +66,13 @@ class NeuralNetwork:
 
     def train(self, train_file):
         # Get the train_data
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=2)
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=10)
         train_labels = train_data[:, :1]
-        train_imgs = train_data[:, 1:] / 255.0
+        train_imgs = train_data[:, 1:] / 255
         nExamples = train_labels.shape[0]
         print("No. Examples: ", nExamples)
         n_epochs = 100
-        learning_rate = 0.1
+        learning_rate = 0.3
         for epoch in range(n_epochs):
             error = 0
             for k in range(nExamples):
@@ -112,7 +106,7 @@ class NeuralNetwork:
 
                 ### OUTPUT LAYER
                 # i: Number of neuron
-                # j: Number of weight of thw i-th neuron
+                # j: Number of weight of the i-th neuron
                 # h: index of X[], correspond to the previous layer of outputLayer
                 h = len(X) - 2
                 delta_error_output = []
@@ -128,27 +122,88 @@ class NeuralNetwork:
                 delta_errors.append(delta_error_output)
 
                 ### HIDDEN LAYER
+                # i: Number of neuron
+                # c: NUmber of children of the i-th neuron
+                # j: NUmber of weight of the i-th neuron
+                # inv_n_layer: Number of layer 0, 1, 2, 3... (The first is not count)
+                # n_layer: Number of the current layer  = (len(self.hiddenLayers) - 1) - inv_n_layer
+                # h: index of X[], correspond to the previous layer of the current layer
+                delta_counter = 0 # Start from 1 because delta_errors[0] correspond to the delta errors of the output
+                for inv_n_layer in range(len(self.hiddenLayers)):
+                    n_layer = (len(self.hiddenLayers) - 1) - inv_n_layer
+                    h = n_layer + 1
+                    delta_error_hidden = []
+                    for i in range(self.hiddenLayers[n_layer].dim()):
+                        sig_ki = X[h+1][i]
+                        for j in range(len(X[h])):
+                            X_kj = X[h][j]
+                            sum = 0
+                            if inv_n_layer == 0:        # Last hidden layer
+                                for c in range(self.outputLayer.dim()):
+                                    W_ci = self.outputLayer.neurons[c].weight[i]
+                                    sum += delta_errors[0][c] * W_ci
+                            else:                       # Other hidden layer
+                                for c in range(self.hiddenLayers[n_layer+1].dim()):
+                                    W_ci = self.hiddenLayers[n_layer+1].neurons[c].weight[i]
+                                    sum += delta_errors[delta_counter][c] * W_ci
+                            delta_error_ki = (sig_ki * (1 - sig_ki)) * sum
+                            grad_ij = X_kj * delta_error_ki
+                            delta_error_hidden.append(delta_error_ki)
+                            self.hiddenLayers[n_layer].neurons[i].weight[j] -= learning_rate * grad_ij
+                    delta_errors.append(delta_error_hidden)
+                    delta_counter += 1
+
+                ### FIRST LAYER
+                for i in range(self.firstLayer.dim()):
+                    sig_ki = X[1][i]
+                    for j in range(len(X[0])):
+                        X_kj = X[0][j]
+                        sum = 0
+                        for c in range(self.hiddenLayers[0].dim()):
+                            W_ci = self.hiddenLayers[0].neurons[c].weight[i]
+                            sum += delta_errors[len(delta_errors)-1][c] * W_ci
+                        delta_error_ki = (sig_ki * (1 - sig_ki)) * sum
+                        grad_ij = delta_error_ki * X_kj
+                        #__prima = self.firstLayer.neurons[i].weight[j]
+                        self.firstLayer.neurons[i].weight[j] -= learning_rate * grad_ij
+                        #__dopo = self.firstLayer.neurons[i].weight[j]
+                        # if(grad_ij != 0):
+                        #     print("da ", __prima, " a ", __dopo, "perchè grad_ij = ", grad_ij)
 
             print("Epoch: ", epoch, " Error: ", np.sqrt(error/(nExamples*10*2)))
 
+    def printWeightOut(self):
+        for neuron in self.outputLayer.neurons:
+            print("Neuron:")
+            print(neuron.weight)
+            print()
+
+    def printWeightFirst(self):
+        print("Neuron 1:")
+        print(self.firstLayer.neurons[0].weight)
+        print()
+
     def predict(self, test_file):
         # Get the test_data
-        test_data = np.loadtxt(test_file, delimiter=",", max_rows=200)
+        test_data = np.loadtxt(test_file, delimiter=",", max_rows=4)
         test_labels = test_data[:, :1]
-        test_imgs = test_data[:, 1:] / 255.
+        test_imgs = test_data[:, 1:] / 255
         for image in test_imgs:
             # Calculates result of the firstLayer
             inputHidden = self.firstLayer.calculateOutput(image)
+            print(inputHidden)
             # Propagation in the hidden layer
             tmp_input = inputHidden
             outputHidden = inputHidden
             for layer in self.hiddenLayers:
                 outputHidden = layer.calculateOutput(tmp_input)
+                print(outputHidden)
                 tmp_input = outputHidden
             # Calculates result of the output
             prediction = self.outputLayer.calculateOutput(outputHidden)
             print("My-prediction: ", prediction)
+            print()
 
-myNN = NeuralNetwork(5, 10)
-myNN.train("data/mnist_train.csv")
+myNN = NeuralNetwork(3, 10)
+#myNN.train("data/mnist_train.csv")
 myNN.predict("data/mnist_test.csv")
