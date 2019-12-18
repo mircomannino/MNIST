@@ -16,6 +16,3 @@ Contains the python scripts to train and make prediction of the MNIST dataset, w
 
 ## MNIST - 1 Layer - Mini batch
 Contains the python scripts to train and make prediction of the MNIST dataset, with a single layer neural network, and using mini batch.
-
-### Author
-Mirco Mannino

@@ -121,15 +121,18 @@ def main():
         risk = 0
         for k in range(l):
             loss = 0
+            prediction = []
             for i in range(m):
                 A[k, i] = 0
                 for j in range(d):
                     A[k, i] = A[k, i] +  W[i, j] * train_imgs[k, j]
                 X[k, i] = sigmoid(A[k, i] - W[i, d]) # 1/(1+math.exp(-A[k,i] - W[i,d]))   #
+                prediction.append(X[k, i])
                 loss += (X[k, i] - train_labels_one_hot[k, i])**2
                 error[i] =  X[k, i] - train_labels_one_hot[k, i]
                 W_grad[i, ] += error[i] * X[k, i] * (1 - X[k, i]) * train_imgs[k, ]
             risk += loss
+            print("prediction: ", prediction)
         W -= (learning_rate/l) * W_grad
         print("Epoch: ", epoch, "   - Normalized error: ", math.sqrt(risk/(l * m)))
 
