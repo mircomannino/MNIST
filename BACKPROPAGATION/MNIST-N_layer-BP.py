@@ -53,6 +53,10 @@ class Layer:
 
 class NeuralNetwork:
     def __init__(self, nHiddenLayers, nHiddenUnits):
+        ###########################################
+        # Change the initialization of the        #
+        # netowrk, with more generalization       #
+        ###########################################
         self.nHiddenLayers = nHiddenLayers
         self.nHiddenUnits = nHiddenUnits
         # Create the first layer
@@ -99,7 +103,7 @@ class NeuralNetwork:
                 prediction = self.outputLayer.calculateOutput(outputHidden)         # Output layer
                 X.append(prediction)
                 #print(prediction)
-                
+
                 # Error
                 for m in range(len(prediction)):
                     error += (prediction[m] - train_label_oneHot[m])**2
@@ -231,8 +235,8 @@ class NeuralNetwork:
             k += 1
 
 ### MNIST ###
-myNN = NeuralNetwork(2, 10)
+myNN = NeuralNetwork(3, 10)
 # myNN.printWeightOut()
 myNN.train("data/mnist_train.csv")
 # myNN.printWeightOut()
-myNN.predict("data/mnist_train.csv")
+myNN.predict("data/mnist_test.csv")
