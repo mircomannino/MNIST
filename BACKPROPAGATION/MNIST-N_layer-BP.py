@@ -13,7 +13,7 @@ np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        self.weight = np.random.rand(self.weightDim + 1) * 0.1
+        self.weight = np.random.rand(self.weightDim + 1) * 0.01
     def calculateOutput(self, input):
         output = 0.0
         if(self.weightDim != len(input)):
@@ -66,7 +66,7 @@ class NeuralNetwork:
 
     def train(self, train_file):
         # Get the train_data
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=2)
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=200)
         train_labels = train_data[:, :1]
         train_imgs = train_data[:, 1:] / 255
         nExamples = train_labels.shape[0]
@@ -75,16 +75,18 @@ class NeuralNetwork:
         learning_rate = 0.7
         for epoch in range(n_epochs):
             error = 0
+
+            # Initialize the gradients
+            grad_out = np.zeros((self.outputLayer.dim(), len(self.outputLayer.neurons[0].weight)))
+            grad_input = np.zeros((self.firstLayer.dim(), len(self.firstLayer.neurons[0].weight)))
+            grad_hidden = []
+            for hidden in self.hiddenLayers:
+                grad_hidden.append(np.zeros((hidden.dim(), len(hidden.neurons[0].weight))))
+
             for k in range(nExamples):
                 ##### Forward Step #####
                 train_label_oneHot = one_hot_encoding(train_labels[k])              # Target - OneHot
                 X = []
-                #           X = [   [input],
-                #                   [result of HL1],
-                #                   [result of HL2],
-                #                   ...,
-                #                   [result of the OL]
-                #               ]
                 X.append(train_imgs[k])
                 firstLayerOutput = self.firstLayer.calculateOutput(train_imgs[k])   # First layer
                 X.append(firstLayerOutput)
@@ -97,16 +99,10 @@ class NeuralNetwork:
                 prediction = self.outputLayer.calculateOutput(outputHidden)         # Output layer
                 X.append(prediction)
                 #print(prediction)
+                
                 # Error
                 for m in range(len(prediction)):
                     error += (prediction[m] - train_label_oneHot[m])**2
-
-                ### DEBUG ###
-                # for i in range(len(X)):
-                #     if i != 0:
-                #         print(X[i])
-                # print("___________________________")
-                #############
 
                 ##### Backward Step #####
                 delta_errors = []               # Contains all the delta errors
@@ -126,8 +122,8 @@ class NeuralNetwork:
                         X_kj = X[h][j]
                         # print("OUT, Neuron ", i, " Weight ", j, "~> X_kj: ", X_kj, "--- sig(a_ki): ", sig_ki)
                         grad_ij = delta_error_ki * X_kj
-                        self.outputLayer.neurons[i].weight[j] -= learning_rate * grad_ij
-                        #print("grad_ij = ", grad_ij, " - ", i, j)
+                        #self.outputLayer.neurons[i].weight[j] -= learning_rate * grad_ij
+                        grad_out[i][j] += grad_ij
                 delta_errors.append(delta_error_output)
 
                 ### HIDDEN LAYER
@@ -138,6 +134,7 @@ class NeuralNetwork:
                 # n_layer: Number of the current layer  = (len(self.hiddenLayers) - 1) - inv_n_layer
                 # h: index of X[], correspond to the previous layer of the current layer
                 delta_counter = 0 # Start from 1 because delta_errors[0] correspond to the delta errors of the output
+                grad_counter = len(grad_hidden) - 1
                 for inv_n_layer in range(len(self.hiddenLayers)):
                     n_layer = (len(self.hiddenLayers) - 1) - inv_n_layer
                     h = n_layer + 1
@@ -159,9 +156,11 @@ class NeuralNetwork:
                         for j in range(len(X[h])):
                             X_kj = X[h][j]
                             grad_ij = X_kj * delta_error_ki
-                            self.hiddenLayers[n_layer].neurons[i].weight[j] -= learning_rate * grad_ij
+                            #self.hiddenLayers[n_layer].neurons[i].weight[j] -= learning_rate * grad_ij
+                            grad_hidden[grad_counter][i][j] += grad_ij
                     delta_errors.append(delta_error_hidden)
                     delta_counter += 1
+                    grad_counter -= 1
 
                 ### FIRST LAYER
                 for i in range(self.firstLayer.dim()):
@@ -174,9 +173,26 @@ class NeuralNetwork:
                     for j in range(len(X[0])):
                         X_kj = X[0][j]
                         grad_ij = X_kj * delta_error_ki
-                        self.firstLayer.neurons[i].weight[j] -= learning_rate * grad_ij
+                        #self.firstLayer.neurons[i].weight[j] -= learning_rate * grad_ij
+                        grad_input[i][j] += grad_ij
                         # if(epoch == 1):
                         #     print("Grad", i, j, "~> ", grad_ij, "Beacuase: ", X_kj, " * ", delta_error_ki)
+
+            # Update output weigths
+            for i in range(self.outputLayer.dim()):
+                for j in range(len(self.outputLayer.neurons[0].weight)):
+                    self.outputLayer.neurons[i].weight[j] -= (learning_rate/nExamples) * grad_out[i][j]
+
+            # Update hidden weights
+            for n_hidden in range(len(self.hiddenLayers)):
+                for i in range(self.hiddenLayers[n_hidden].dim()):
+                    for j in range(len(self.hiddenLayers[n_hidden].neurons[0].weight)):
+                        self.hiddenLayers[n_hidden].neurons[i].weight[j] -= (learning_rate/nExamples) * grad_hidden[n_hidden][i][j]
+
+            # Update input weights
+            for i in range(self.firstLayer.dim()):
+                for j in range(len(self.firstLayer.neurons[0].weight)):
+                    self.firstLayer.neurons[i].weight[j] -= (learning_rate/nExamples) * grad_input[i][j]
 
             print("Epoch: ", epoch, " Error: ", np.sqrt(error/(nExamples*10)))
 
@@ -215,8 +231,8 @@ class NeuralNetwork:
             k += 1
 
 ### MNIST ###
-myNN = NeuralNetwork(3, 10)
+myNN = NeuralNetwork(2, 10)
 # myNN.printWeightOut()
 myNN.train("data/mnist_train.csv")
 # myNN.printWeightOut()
-myNN.predict("data/mnist_test.csv")
+myNN.predict("data/mnist_train.csv")
