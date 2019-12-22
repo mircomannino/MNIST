@@ -70,31 +70,4 @@ class NeuralNetwork:
             nextInput = result
         return result
 
-def main():
-    dimInput = 2
-    nHidden = 1
-    dimHiddenLayers = [2]
-    dimOutputLayer = 1
-    nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
-    # Set the correct weight
-    nn.layers[0].neurons[0].weight[0] = 20
-    nn.layers[0].neurons[0].weight[1] = 20
-    nn.layers[0].neurons[0].weight[2] = -10
-    nn.layers[0].neurons[1].weight[0] = -20
-    nn.layers[0].neurons[1].weight[1] = -20
-    nn.layers[0].neurons[1].weight[2] = 30
-    nn.layers[1].neurons[0].weight[0] = 20
-    nn.layers[1].neurons[0].weight[1] = 20
-    nn.layers[1].neurons[0].weight[2] = -30
-    # Prediction
-    print("XOR prediction")
-    inputs = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    for input in inputs:
-        prediction = nn.predict(input)
-        if(float(prediction[0]) > 0.5):
-            print("Input: ", input, " Result: 1", "~", prediction)
-        else:
-            print("Input: ", input, " Result: 0", "~", prediction)
-
-if __name__ == '__main__':
-    main()
+nn = NeuralNetwork(2, 1, [2], 1)
