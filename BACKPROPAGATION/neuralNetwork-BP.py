@@ -13,7 +13,7 @@ np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        self.weight = np.random.rand(self.weightDim + 1)  * 0.00000000000000000000001
+        self.weight = np.random.rand(self.weightDim + 1)  * 0.01
     def calculateOutput(self, input):
         output = 0.0
         if(self.weightDim != len(input)):
@@ -23,6 +23,8 @@ class Neuron:
             output += self.weight[i] * input[i]
         output += self.weight[self.weightDim]
         return sigmoid(output)
+    def nWeight(self):
+        return (self.weightDim + 1) # "+1" Due to the bias term
 
 class Layer:
     def __init__(self, layerDim, weightDim):
@@ -53,14 +55,21 @@ class NeuralNetwork:
         self.layers.append(Layer(dimOutputLayer, self.layers[nHidden-1].dim()))         # Output layer
 
     def checkLayers(self):
-        for layer in self.layers:
-            print("Layer:")
-            print(layer.dim())
-            for neuron in layer.neurons:
-                print(neuron.weight)
+        for i in range(len(self.layers)):
+            print("Layer ", i, ":")
+            print("\t# Neurons: ", self.layers[i].dim())
+            for j in range(len(self.layers[i].neurons)):
+                print("\t\t# Weigth(", j, "): ", self.layers[i].neurons[j].nWeight())
             print("-----------------")
 
-    def predict(self, input):
+    def train(self, train_file, learning_rate, n_epochs):
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=100)
+        train_labels = train_data[:, :1]
+        train_imgs = train_data[:, 1:] / 255
+        
+        # Do the training...
+
+    def predict(self, input, label):
         if len(input) != self.dimInput:
             return -1
         # FORWARD STEP
@@ -70,4 +79,26 @@ class NeuralNetwork:
             nextInput = result
         return result
 
-nn = NeuralNetwork(2, 1, [2], 1)
+def main():
+    dimInput = 28 * 28
+    nHidden = 2
+    dimHiddenLayers = [10, 10]
+    dimOutputLayer = 10
+    nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
+    #nn.checkLayers()
+
+    # Train
+
+    # Prediction
+    test_file = "data/mnist_test.csv"
+    test_data = np.loadtxt(test_file, delimiter=",", max_rows=2)
+    test_labels = test_data[:, :1]
+    test_imgs = test_data[:, 1:] / 255
+    for k in range(len(test_imgs)):
+        print(nn.predict(test_imgs[k], test_labels[k]))
+    input_zero = np.zeros(784)
+    print(nn.predict(input_zero, 0))
+
+
+if __name__ == '__main__':
+    main()

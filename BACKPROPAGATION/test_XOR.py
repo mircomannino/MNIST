@@ -13,7 +13,7 @@ np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        self.weight = np.random.rand(self.weightDim + 1)  * 0.00000000000000000000001
+        self.weight = np.random.rand(self.weightDim + 1)  * 0.1
     def calculateOutput(self, input):
         output = 0.0
         if(self.weightDim != len(input)):
