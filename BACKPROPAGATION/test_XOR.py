@@ -14,6 +14,7 @@ class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
         self.weight = np.random.rand(self.weightDim + 1)  * 0.1
+        self.gradient = np.zeros(self.weightDim + 1)
     def calculateOutput(self, input):
         output = 0.0
         if(self.weightDim != len(input)):
