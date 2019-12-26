@@ -13,7 +13,8 @@ np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        self.weight = np.random.rand(self.weightDim + 1) * 0.01
+        # self.weight = np.random.rand(self.weightDim + 1) * 0.01
+        self.weight = np.random.uniform(low=-1, high=1, size=(self.weightDim + 1)) * 1
         self.gradient = np.zeros(self.weightDim + 1)
         self.delta_error = 0
     def calculateOutput(self, input):
@@ -69,9 +70,9 @@ class NeuralNetwork:
             print("-----------------")
 
     def train(self, train_file, learning_rate, n_epochs):
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=10000)
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=1000)
         train_labels = train_data[:, :1]
-        train_imgs = train_data[:, 1:] / 1
+        train_imgs = train_data[:, 1:] / 255
 
         nExamples = train_imgs.shape[0]
         miniBatchSize = 100
@@ -81,7 +82,7 @@ class NeuralNetwork:
 
             for k_tot in range(miniBatchSize):
                 ###################### FORWARD STEP ############################
-                k = (epoch * miniBatchSize) + k_tot
+                k = ((epoch * miniBatchSize) + k_tot) % nExamples
                 X = []
                 X.append(train_imgs[k])
                 train_label_oneHot = one_hot_encoding(train_labels[k])
@@ -155,19 +156,46 @@ class NeuralNetwork:
             nextInput = result
         return result
 
+def argmax(list):
+    max_index = 0
+    max = 0
+    for i in range(len(list)):
+        if (list[i] > max):
+            max = list[i]
+            max_index = i
+    return max_index
+
 def main():
     dimInput = 28 * 28
     nHidden = 2
-    dimHiddenLayers = [20, 15]
+    dimHiddenLayers = [200, 80]
     dimOutputLayer = 10
     nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
     #nn.checkLayers()
+
+    # Prediction
+    test_file = "data/mnist_test.csv"
+    test_data = np.loadtxt(test_file, delimiter=",", max_rows=5)
+    test_labels = test_data[:, :1]
+    test_imgs = test_data[:, 1:] / 255
+    tot_pred = test_data.shape[0]
+    correct_pred = 0
+    for k in range(len(test_imgs)):
+        prediction = nn.predict(test_imgs[k], test_labels[k])
+        print(test_labels[k], prediction)
+        my_prediction = int(argmax(prediction))
+        real_prediction = int(test_labels[k])
+        print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
+        if (my_prediction == real_prediction):
+            correct_pred += 1
+    print("Total: ", tot_pred)
+    print("Correct: ", correct_pred)
 
 
     # Train
     train_file = "data/mnist_train.csv"
     learning_rate = 0.01
-    n_epochs = 100
+    n_epochs = 25
     nn.train(train_file, learning_rate, n_epochs)
 
     # INfo output layer
@@ -177,14 +205,22 @@ def main():
     #     print(nn.layers[outIndex].neurons[i].delta_error)
 
     # Prediction
-    test_file = "data/mnist_train.csv"
-    test_data = np.loadtxt(test_file, delimiter=",", max_rows=2)
+    test_file = "data/mnist_test.csv"
+    test_data = np.loadtxt(test_file, delimiter=",", max_rows=100)
     test_labels = test_data[:, :1]
     test_imgs = test_data[:, 1:] / 255
+    tot_pred = test_data.shape[0]
+    correct_pred = 0
     for k in range(len(test_imgs)):
-        print(nn.predict(test_imgs[k], test_labels[k]))
-    input_zero = np.zeros(784)
-    print(nn.predict(input_zero, 0))
+        prediction = nn.predict(test_imgs[k], test_labels[k])
+        print(test_labels[k], prediction)
+        my_prediction = int(argmax(prediction))
+        real_prediction = int(test_labels[k])
+        print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
+        if (my_prediction == real_prediction):
+            correct_pred += 1
+    print("Total: ", tot_pred)
+    print("Correct: ", correct_pred)
 
 
 if __name__ == '__main__':
