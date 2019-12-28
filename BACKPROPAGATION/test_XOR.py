@@ -4,17 +4,13 @@ import time
 def sigmoid(a):
     return 1 / (1 + np.exp(-a))
 
-def one_hot_encoding(n):
-    all_digit = np.arange(10)
-    result = ((all_digit == n).astype(np.int))
-    return result
 
 np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
         # self.weight = np.random.rand(self.weightDim + 1) * 0.01
-        self.weight = np.random.uniform(low=-1, high=1, size=(self.weightDim + 1)) * 10
+        self.weight = np.random.uniform(low=-1, high=1, size=(self.weightDim + 1)) * 1
         self.gradient = np.zeros(self.weightDim + 1)
         self.delta_error = 0
     def calculateOutput(self, input):
@@ -71,22 +67,21 @@ class NeuralNetwork:
             print("-----------------")
 
     def train(self, train_file, learning_rate, n_epochs):
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=100)
+        train_data = np.loadtxt(train_file, delimiter=",")
         train_labels = train_data[:, :1]
-        train_imgs = train_data[:, 1:] / 255
+        train_imgs = train_data[:, 1:]
 
         nExamples = train_imgs.shape[0]
-        miniBatchSize = 1
+        miniBatchSize = 4
 
         for epoch in range(n_epochs):
             error = 0
 
-            for k_tot in range(miniBatchSize):
+            for k in range(nExamples):
                 ###################### FORWARD STEP ############################
-                k = ((epoch * miniBatchSize) + k_tot) % nExamples
                 X = []
                 X.append(train_imgs[k])
-                train_label_oneHot = one_hot_encoding(train_labels[k])
+                train_label_oneHot = (train_labels[k])
                 nextInput = train_imgs[k]
                 for layer in self.layers:
                     result = layer.calculateOutput(nextInput)
@@ -164,19 +159,45 @@ def main():
     dimHiddenLayers = [2]
     dimOutputLayer = 1
     nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
-    
-    # # Set the correct weight
-    nn.layers[0].neurons[0].weight[0] = 20
-    nn.layers[0].neurons[0].weight[1] = 20
-    nn.layers[0].neurons[0].weight[2] = -10
-    nn.layers[0].neurons[1].weight[0] = -20
-    nn.layers[0].neurons[1].weight[1] = -20
-    nn.layers[0].neurons[1].weight[2] = 30
-    nn.layers[1].neurons[0].weight[0] = 20
-    nn.layers[1].neurons[0].weight[1] = 20
-    nn.layers[1].neurons[0].weight[2] = -30
 
-    # Prediction
+    ############################ Training ######################################
+    learning_rate = 1.5
+    n_epochs = 1000
+    print("Starting training...")
+    nn.train("data/xor_train.csv", learning_rate, n_epochs)
+    print("Training complete!\n")
+    ############################################################################
+
+    ##################### Set the correct weight [1] ###########################
+    # nn.layers[0].neurons[0].weight[0] = 20
+    # nn.layers[0].neurons[0].weight[1] = 20
+    # nn.layers[0].neurons[0].weight[2] = -10
+    # nn.layers[0].neurons[1].weight[0] = -20
+    # nn.layers[0].neurons[1].weight[1] = -20
+    # nn.layers[0].neurons[1].weight[2] = 30
+    # nn.layers[1].neurons[0].weight[0] = 20
+    # nn.layers[1].neurons[0].weight[1] = 20
+    # nn.layers[1].neurons[0].weight[2] = -30
+    ############################################################################
+
+    ##################### Set the correct weight [1] ###########################
+    # nn.layers[0].neurons[0].weight[0] = -7.05624541
+    # nn.layers[0].neurons[0].weight[1] = 7.07011677
+    # nn.layers[0].neurons[0].weight[2] = 3.59994854
+    # nn.layers[0].neurons[1].weight[0] = -6.18799956
+    # nn.layers[0].neurons[1].weight[1] = 5.93663609
+    # nn.layers[0].neurons[1].weight[2] = -3.16858404
+    # nn.layers[1].neurons[0].weight[0] = -10.53429254
+    # nn.layers[1].neurons[0].weight[1] = 11.05323456
+    # nn.layers[1].neurons[0].weight[2] = 4.99350977
+    ############################################################################
+
+    # Check the weights of each layers
+    print("Weights before the prediction:")
+    nn.checkLayers()
+    print()
+
+    ############################# Prediction ###################################
     print("XOR prediction")
     inputs = [[0, 0], [0, 1], [1, 0], [1, 1]]
     for input in inputs:
@@ -185,6 +206,7 @@ def main():
             print("Input: ", input, " Result: 1", "~", prediction)
         else:
             print("Input: ", input, " Result: 0", "~", prediction)
+    ############################################################################
 
 if __name__ == '__main__':
     main()

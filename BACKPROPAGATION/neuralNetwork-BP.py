@@ -9,6 +9,15 @@ def one_hot_encoding(n):
     result = ((all_digit == n).astype(np.int))
     return result
 
+def argmax(list):
+    max_index = 0
+    max = 0
+    for i in range(len(list)):
+        if (list[i] > max):
+            max = list[i]
+            max_index = i
+    return max_index
+
 np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
@@ -67,6 +76,7 @@ class NeuralNetwork:
             print("\t# Neurons: ", self.layers[i].dim())
             for j in range(len(self.layers[i].neurons)):
                 print("\t\t# Weigth(", j, "): ", self.layers[i].neurons[j].nWeight())
+                print("\t\t", self.layers[i].neurons[j].weight)
             print("-----------------")
 
     def train(self, train_file, learning_rate, n_epochs):
@@ -155,15 +165,6 @@ class NeuralNetwork:
             result = layer.calculateOutput(nextInput)
             nextInput = result
         return result
-
-def argmax(list):
-    max_index = 0
-    max = 0
-    for i in range(len(list)):
-        if (list[i] > max):
-            max = list[i]
-            max_index = i
-    return max_index
 
 def main():
     dimInput = 28 * 28
