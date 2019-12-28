@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import time
 
@@ -8,6 +9,14 @@ def one_hot_encoding(n):
     all_digit = np.arange(10)
     result = ((all_digit == n).astype(np.int))
     return result
+
+def update_line(g, x, y, ax):
+    g.set_xdata(np.append(g.get_xdata(), x))
+    g.set_ydata(np.append(g.get_ydata(), y))
+    ax.relim()
+    ax.autoscale_view(True,True,True)
+    plt.draw()
+    plt.pause(0.1)
 
 def argmax(list):
     max_index = 0
@@ -79,7 +88,16 @@ class NeuralNetwork:
                 print("\t\t", self.layers[i].neurons[j].weight)
             print("-----------------")
 
-    def train(self, train_file, learning_rate, n_epochs):
+    def train(self, train_file, learning_rate, n_epochs, plot=False):
+        # Preparing the plot
+        axes = plt.gca()
+        axes.set_autoscale_on(True)
+        #label of axes
+        plt.ylabel('empirical risk')
+        plt.xlabel('no epoch')
+        g, = plt.plot([], [])
+
+        # Get the data
         train_data = np.loadtxt(train_file, delimiter=",", max_rows=1000)
         train_labels = train_data[:, :1]
         train_imgs = train_data[:, 1:] / 255
@@ -152,9 +170,12 @@ class NeuralNetwork:
                         #     print("PErchè gradient = ", layer.neurons[i].gradient[j])
                         layer.neurons[i].gradient[j] = 0
 
-            print("Epoch: ", epoch, "Error: ", np.sqrt(error/(learning_rate*2*nExamples)))
-        # Do the training...
-
+            if(plot):
+                update_line(g, epoch, np.sqrt(error/(nExamples)), axes)
+                print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
+            else:
+                print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
+        plt.show()
 
     def predict(self, input, label):
         if len(input) != self.dimInput:
@@ -197,7 +218,7 @@ def main():
     train_file = "data/mnist_train.csv"
     learning_rate = 0.01
     n_epochs = 25
-    nn.train(train_file, learning_rate, n_epochs)
+    nn.train(train_file, learning_rate, n_epochs, True)
 
     # INfo output layer
     # outIndex = len(nn.layers) - 1

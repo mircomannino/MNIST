@@ -1,8 +1,17 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import time
 
 def sigmoid(a):
     return 1 / (1 + np.exp(-a))
+
+def update_line(g, x, y, ax):
+    g.set_xdata(np.append(g.get_xdata(), x))
+    g.set_ydata(np.append(g.get_ydata(), y))
+    ax.relim()
+    ax.autoscale_view(True,True,True)
+    plt.draw()
+    plt.pause(0.1)
 
 
 np.random.seed(int(time.time()))
@@ -66,7 +75,16 @@ class NeuralNetwork:
                 print("\t\t", self.layers[i].neurons[j].weight)
             print("-----------------")
 
-    def train(self, train_file, learning_rate, n_epochs):
+    def train(self, train_file, learning_rate, n_epochs, plot=True):
+        # Preparing the plot
+        axes = plt.gca()
+        axes.set_autoscale_on(True)
+        #label of axes
+        plt.ylabel('empirical risk')
+        plt.xlabel('no epoch')
+        g, = plt.plot([], [])
+
+        # Get the data
         train_data = np.loadtxt(train_file, delimiter=",")
         train_labels = train_data[:, :1]
         train_imgs = train_data[:, 1:]
@@ -138,9 +156,12 @@ class NeuralNetwork:
                         #     print("PErchè gradient = ", layer.neurons[i].gradient[j])
                         layer.neurons[i].gradient[j] = 0
 
-            print("Epoch: ", epoch, "Error: ", np.sqrt(error/(learning_rate*2*nExamples)))
-            # self.checkLayers()
-            # print("-----------------------")
+            if(plot):
+                update_line(g, epoch, np.sqrt(error/(nExamples)), axes)
+                print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
+            else:
+                print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
+        plt.show()
 
 
     def predict(self, input, label=None):
@@ -162,9 +183,9 @@ def main():
 
     ############################ Training ######################################
     learning_rate = 1.5
-    n_epochs = 1000
+    n_epochs = 500
     print("Starting training...")
-    nn.train("data/xor_train.csv", learning_rate, n_epochs)
+    nn.train("data/xor_train.csv", learning_rate, n_epochs, True)
     print("Training complete!\n")
     ############################################################################
 
