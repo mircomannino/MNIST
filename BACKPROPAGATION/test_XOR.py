@@ -75,7 +75,7 @@ class NeuralNetwork:
                 print("\t\t", self.layers[i].neurons[j].weight)
             print("-----------------")
 
-    def train(self, train_file, learning_rate, n_epochs, plot=True):
+    def train(self, train_file, learning_rate, n_epochs, scale_factor=1, plot=True):
         # Preparing the plot
         axes = plt.gca()
         axes.set_autoscale_on(True)
@@ -185,7 +185,7 @@ def main():
     learning_rate = 1.5
     n_epochs = 500
     print("Starting training...")
-    nn.train("data/xor_train.csv", learning_rate, n_epochs, True)
+    nn.train("data/xor_train.csv", learning_rate, n_epochs, plot=True)
     print("Training complete!\n")
     ############################################################################
 

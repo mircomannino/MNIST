@@ -88,7 +88,7 @@ class NeuralNetwork:
                 print("\t\t", self.layers[i].neurons[j].weight)
             print("-----------------")
 
-    def train(self, train_file, learning_rate, n_epochs, plot=False):
+    def train(self, train_file, learning_rate, n_epochs, scale_factor=1, plot=False):
         # Preparing the plot
         axes = plt.gca()
         axes.set_autoscale_on(True)
@@ -100,7 +100,7 @@ class NeuralNetwork:
         # Get the data
         train_data = np.loadtxt(train_file, delimiter=",", max_rows=1000)
         train_labels = train_data[:, :1]
-        train_imgs = train_data[:, 1:] / 255
+        train_imgs = train_data[:, 1:] / scale_factor
 
         nExamples = train_imgs.shape[0]
         miniBatchSize = 100
@@ -175,7 +175,8 @@ class NeuralNetwork:
                 print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
             else:
                 print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
-        plt.show()
+        if(plot):
+            plt.show()
 
     def predict(self, input, label):
         if len(input) != self.dimInput:
@@ -216,9 +217,10 @@ def main():
 
     # Train
     train_file = "data/mnist_train.csv"
-    learning_rate = 0.01
-    n_epochs = 25
-    nn.train(train_file, learning_rate, n_epochs, True)
+    learning_rate = 0.001
+    n_epochs = 10
+    scale_factor = 255
+    nn.train(train_file, learning_rate, n_epochs, scale_factor, False)
 
     # INfo output layer
     # outIndex = len(nn.layers) - 1
@@ -228,7 +230,7 @@ def main():
 
     # Prediction
     test_file = "data/mnist_test.csv"
-    test_data = np.loadtxt(test_file, delimiter=",", max_rows=100)
+    test_data = np.loadtxt(test_file, delimiter=",", max_rows=1000)
     test_labels = test_data[:, :1]
     test_imgs = test_data[:, 1:] / 255
     tot_pred = test_data.shape[0]
