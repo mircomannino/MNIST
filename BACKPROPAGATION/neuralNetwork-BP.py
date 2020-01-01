@@ -93,8 +93,8 @@ class NeuralNetwork:
         axes = plt.gca()
         axes.set_autoscale_on(True)
         #label of axes
-        plt.ylabel('empirical risk')
-        plt.xlabel('no epoch')
+        plt.ylabel('quadratic-error')
+        plt.xlabel('n. epoch')
         g, = plt.plot([], [])
 
         # Get the data
@@ -218,9 +218,9 @@ def main():
     # Train
     train_file = "data/mnist_train.csv"
     learning_rate = 0.001
-    n_epochs = 10
+    n_epochs = 100
     scale_factor = 255
-    nn.train(train_file, learning_rate, n_epochs, scale_factor, False)
+    nn.train(train_file, learning_rate, n_epochs, scale_factor, True)
 
     # INfo output layer
     # outIndex = len(nn.layers) - 1
