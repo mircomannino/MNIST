@@ -31,7 +31,7 @@ np.random.seed(int(time.time()))
 class Neuron:
     def __init__(self, weightDim):
         self.weightDim = weightDim
-        # self.weight = np.random.rand(self.weightDim + 1) * 0.01
+        #self.weight = np.random.rand(self.weightDim + 1) * 0.1
         self.weight = np.random.uniform(low=-1, high=1, size=(self.weightDim + 1)) * 1
         self.gradient = np.zeros(self.weightDim + 1)
         self.delta_error = 0
@@ -77,7 +77,10 @@ class NeuralNetwork:
                 self.layers.append(Layer(dimHiddenLayers[i], dimInput))                 # First hidden layer
             else:
                 self.layers.append(Layer(dimHiddenLayers[i], self.layers[i-1].dim()))   # Other hidden layers
-        self.layers.append(Layer(dimOutputLayer, self.layers[nHidden-1].dim()))         # Output layer
+        if nHidden > 0:                                                         # Output layer
+            self.layers.append(Layer(dimOutputLayer, self.layers[nHidden-1].dim()))
+        else:
+            self.layers.append(Layer(dimOutputLayer, dimInput))
 
     def checkLayers(self):
         for i in range(len(self.layers)):
@@ -98,7 +101,7 @@ class NeuralNetwork:
         g, = plt.plot([], [])
 
         # Get the data
-        train_data = np.loadtxt(train_file, delimiter=",", max_rows=1000)
+        train_data = np.loadtxt(train_file, delimiter=",", max_rows=10000)
         train_labels = train_data[:, :1]
         train_imgs = train_data[:, 1:] / scale_factor
 
@@ -189,62 +192,73 @@ class NeuralNetwork:
         return result
 
 def main():
-    dimInput = 28 * 28
-    nHidden = 2
-    dimHiddenLayers = [200, 80]
-    dimOutputLayer = 10
-    nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
-    #nn.checkLayers()
 
-    # Prediction
-    test_file = "data/mnist_test.csv"
-    test_data = np.loadtxt(test_file, delimiter=",", max_rows=5)
-    test_labels = test_data[:, :1]
-    test_imgs = test_data[:, 1:] / 255
-    tot_pred = test_data.shape[0]
-    correct_pred = 0
-    for k in range(len(test_imgs)):
-        prediction = nn.predict(test_imgs[k], test_labels[k])
-        print(test_labels[k], prediction)
-        my_prediction = int(argmax(prediction))
-        real_prediction = int(test_labels[k])
-        print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
-        if (my_prediction == real_prediction):
-            correct_pred += 1
-    print("Total: ", tot_pred)
-    print("Correct: ", correct_pred)
+    all_learning_rate = [0.06]
+
+    for learning_rate in all_learning_rate:
+
+        dimInput = 28 * 28
+        nHidden = 1
+        dimHiddenLayers = [30]
+        dimOutputLayer = 10
+        nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
+        #nn.checkLayers()
 
 
-    # Train
-    train_file = "data/mnist_train.csv"
-    learning_rate = 0.001
-    n_epochs = 100
-    scale_factor = 255
-    nn.train(train_file, learning_rate, n_epochs, scale_factor, True)
+        # # Prediction
+        # test_file = "data/mnist_test.csv"
+        # test_data = np.loadtxt(test_file, delimiter=",", max_rows=5)
+        # test_labels = test_data[:, :1]
+        # test_imgs = test_data[:, 1:] / 255
+        # tot_pred = test_data.shape[0]
+        # correct_pred = 0
+        # for k in range(len(test_imgs)):
+        #     prediction = nn.predict(test_imgs[k], test_labels[k])
+        #     print(test_labels[k], prediction)
+        #     my_prediction = int(argmax(prediction))
+        #     real_prediction = int(test_labels[k])
+        #     print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
+        #     if (my_prediction == real_prediction):
+        #         correct_pred += 1
+        # print("Total: ", tot_pred)
+        # print("Correct: ", correct_pred)
 
-    # INfo output layer
-    # outIndex = len(nn.layers) - 1
-    # for i in range(len(nn.layers[outIndex].neurons)):
-    #     print("Neuron ", i)
-    #     print(nn.layers[outIndex].neurons[i].delta_error)
 
-    # Prediction
-    test_file = "data/mnist_test.csv"
-    test_data = np.loadtxt(test_file, delimiter=",", max_rows=1000)
-    test_labels = test_data[:, :1]
-    test_imgs = test_data[:, 1:] / 255
-    tot_pred = test_data.shape[0]
-    correct_pred = 0
-    for k in range(len(test_imgs)):
-        prediction = nn.predict(test_imgs[k], test_labels[k])
-        print(test_labels[k], prediction)
-        my_prediction = int(argmax(prediction))
-        real_prediction = int(test_labels[k])
-        print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
-        if (my_prediction == real_prediction):
-            correct_pred += 1
-    print("Total: ", tot_pred)
-    print("Correct: ", correct_pred)
+        # Train
+        train_file = "data/mnist_train.csv"
+        # learning_rate = 0.1
+        n_epochs = 300
+        scale_factor = 255
+        nn.train(train_file, learning_rate, n_epochs, scale_factor, False)
+
+        # INfo output layer
+        outIndex = len(nn.layers) - 1
+        for i in range(len(nn.layers[outIndex].neurons)):
+            print("Neuron ", i)
+            print(nn.layers[outIndex].neurons[i].delta_error)
+
+        # Prediction
+        test_file = "data/mnist_test.csv"
+        test_data = np.loadtxt(test_file, delimiter=",", max_rows=1000)
+        test_labels = test_data[:, :1]
+        test_imgs = test_data[:, 1:] / 255
+        tot_pred = test_data.shape[0]
+        correct_pred = 0
+        for k in range(len(test_imgs)):
+            prediction = nn.predict(test_imgs[k], test_labels[k])
+            print(test_labels[k], prediction)
+            my_prediction = int(argmax(prediction))
+            real_prediction = int(test_labels[k])
+            print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
+            if (my_prediction == real_prediction):
+                correct_pred += 1
+        print("Total: ", tot_pred)
+        print("Correct: ", correct_pred)
+
+        accuracy = (correct_pred * 100) / tot_pred
+        with open("result-MNIST.txt", "a+") as out_file:
+            out_msg = "learning_rate: " + str(learning_rate) + "\t accuracy: " + str(accuracy) + "%\n"
+            out_file.write(out_msg)
 
 
 if __name__ == '__main__':
