@@ -1,4 +1,6 @@
-Network: [784, 30, 10]
+Network:    [784, 30, 10]
+Learning:   N-Examples: 10000
+            Batch-Size: 150
 
 learning_rate: 0.01	 accuracy: 65.4%
 learning_rate: 0.02	 accuracy: 76.5%

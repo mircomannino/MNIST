@@ -66,18 +66,19 @@ class Layer:
         return self.layerDim
 
 class NeuralNetwork:
-    def __init__(self, dimInput, nHidden, dimHiddenLayers, dimOutputLayer):
-        self.dimInput = dimInput
-        self.nHidden = nHidden
-        self.dimHiddenLayers = dimHiddenLayers
-        self.dimOutputLayer = dimOutputLayer
+
+    def __init__(self, architecture):
+        self.dimInput = architecture[0]
+        nHidden = len(architecture) - 2
+        dimHiddenLayers = architecture[1:-1]
+        dimOutputLayer = architecture[-1]
         self.layers = []
         for i in range(nHidden):
             if(i == 0):
-                self.layers.append(Layer(dimHiddenLayers[i], dimInput))                 # First hidden layer
+                self.layers.append(Layer(dimHiddenLayers[i], self.dimInput))                 # First hidden layer
             else:
-                self.layers.append(Layer(dimHiddenLayers[i], self.layers[i-1].dim()))   # Other hidden layers
-        if nHidden > 0:                                                         # Output layer
+                self.layers.append(Layer(dimHiddenLayers[i], self.layers[i-1].dim()))       # Other hidden layers
+        if nHidden > 0:                                                                     # Output layer
             self.layers.append(Layer(dimOutputLayer, self.layers[nHidden-1].dim()))
         else:
             self.layers.append(Layer(dimOutputLayer, dimInput))
@@ -106,7 +107,7 @@ class NeuralNetwork:
         train_imgs = train_data[:, 1:] / scale_factor
 
         nExamples = train_imgs.shape[0]
-        miniBatchSize = 100
+        miniBatchSize = 150
 
         for epoch in range(n_epochs):
             error = 0
@@ -173,6 +174,7 @@ class NeuralNetwork:
                         #     print("PErchè gradient = ", layer.neurons[i].gradient[j])
                         layer.neurons[i].gradient[j] = 0
 
+            # Write the result and make the graph
             if(plot):
                 update_line(g, epoch, np.sqrt(error/(nExamples)), axes)
                 print("Epoch: ", epoch, "Error: ", np.sqrt(error/(nExamples)))
@@ -192,50 +194,17 @@ class NeuralNetwork:
         return result
 
 def main():
-
     all_learning_rate = [0.06]
 
     for learning_rate in all_learning_rate:
-
-        dimInput = 28 * 28
-        nHidden = 1
-        dimHiddenLayers = [30]
-        dimOutputLayer = 10
-        nn = NeuralNetwork(dimInput, nHidden, dimHiddenLayers, dimOutputLayer)
-        #nn.checkLayers()
-
-
-        # # Prediction
-        # test_file = "data/mnist_test.csv"
-        # test_data = np.loadtxt(test_file, delimiter=",", max_rows=5)
-        # test_labels = test_data[:, :1]
-        # test_imgs = test_data[:, 1:] / 255
-        # tot_pred = test_data.shape[0]
-        # correct_pred = 0
-        # for k in range(len(test_imgs)):
-        #     prediction = nn.predict(test_imgs[k], test_labels[k])
-        #     print(test_labels[k], prediction)
-        #     my_prediction = int(argmax(prediction))
-        #     real_prediction = int(test_labels[k])
-        #     print("Ho predetto: ", my_prediction, " Corretto: ", real_prediction)
-        #     if (my_prediction == real_prediction):
-        #         correct_pred += 1
-        # print("Total: ", tot_pred)
-        # print("Correct: ", correct_pred)
-
+        # Instance of the class 'Neural network'
+        nn = NeuralNetwork([784, 30, 10])
 
         # Train
         train_file = "data/mnist_train.csv"
-        # learning_rate = 0.1
-        n_epochs = 300
+        n_epochs = 200
         scale_factor = 255
         nn.train(train_file, learning_rate, n_epochs, scale_factor, False)
-
-        # INfo output layer
-        outIndex = len(nn.layers) - 1
-        for i in range(len(nn.layers[outIndex].neurons)):
-            print("Neuron ", i)
-            print(nn.layers[outIndex].neurons[i].delta_error)
 
         # Prediction
         test_file = "data/mnist_test.csv"
@@ -255,11 +224,8 @@ def main():
         print("Total: ", tot_pred)
         print("Correct: ", correct_pred)
 
-        accuracy = (correct_pred * 100) / tot_pred
-        with open("result-MNIST.txt", "a+") as out_file:
-            out_msg = "learning_rate: " + str(learning_rate) + "\t accuracy: " + str(accuracy) + "%\n"
-            out_file.write(out_msg)
-
-
 if __name__ == '__main__':
     main()
+
+
+#### Gradiente numerico
